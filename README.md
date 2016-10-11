@@ -24,4 +24,5 @@ python -m SimpleHTTPServer 8080
 
 ## Details
 
-- The Computer looks for winning moves by looking at odd-length word that currently begin with letters in play. 
+- The Computer looks for winning moves by looking at odd-length word that currently begin with letters in play, and such that the next letter will not complete a word that is 4+ letters. 
+

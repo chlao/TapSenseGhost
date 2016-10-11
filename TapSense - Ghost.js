@@ -129,6 +129,7 @@ function isLoser(){
 	var i; 
 	var playButton;
 
+	// Filter the word list to be consistent with the current word in play (based on the last move)
 	filterWordList();
 
 	// prefix is present in the list 
@@ -192,7 +193,7 @@ function computerPlay(){
 }
 
 function calculateWinningMoves(){
-	// 
+	// Look at words that are at least 2 letters longer 
 	var requiredLen = ghost.wordInPlay.length + 2; 
 	var winningMoves = []; 
 	var word;
