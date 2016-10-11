@@ -1,4 +1,4 @@
-== README ==
+# Ghost
 
 In the game of Ghost, two players take turns building up an English word from left to right. 
 Each player adds one letter per turn. The goal is to not complete the spelling of a word: 
@@ -16,5 +16,12 @@ extend the game as long as possible (choosing randomly among choices that force 
 In your submission email, answer this question: if the human starts the game with 'n', 
 and the computer plays according to the strategy above, what unique word will complete the human's victory? 
 
-=== Details ===
+## Viewing the app for development
 
+An easy way to get this frontend-only app up and running is to cd into this directory in your terminal window, then run:
+
+python -m SimpleHTTPServer 8080
+
+## Details
+
+- The Computer looks for winning moves by looking at odd-length word that currently begin with letters in play. 

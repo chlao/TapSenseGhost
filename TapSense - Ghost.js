@@ -45,7 +45,7 @@ function play(){
 
 function readWordList(){
 	var xhrFile = new XMLHttpRequest();
-	xhrFile.open("GET", "WORD.LST.txt", false);
+	xhrFile.open('GET', 'WORD.LST.txt', false);
 
 	xhrFile.onreadystatechange = function(){
         if(xhrFile.readyState === 4){
@@ -127,7 +127,6 @@ function findWord(word){
 
 function isLoser(){
 	var i; 
-
 	var playButton;
 
 	filterWordList();
@@ -152,12 +151,23 @@ function isLoser(){
 }
 
 function humanPlay(){
-	var letter = prompt('The current word: ' + ghost.wordInPlay + '\nEnter a letter.'); 
+	var letter = prompt('The current word: ' + ghost.wordInPlay + '\nEnter a letter.');
 
 	// Validate input - A-Z, a-z
+	while (!validateInput(letter)){
+		letter = prompt('The current word: ' + ghost.wordInPlay + '\nEnter a letter.');
+	}
+
 	ghost.wordInPlay += letter;
 
 	return isLoser(); 
+}
+
+function validateInput(letter){
+	if ((letter === null) || (letter.length !== 1) || (!/^[a-zA-Z]+$/.test(letter))){
+		return false; 
+	}
+	return true; 
 }
 
 function computerPlay(){
@@ -173,7 +183,6 @@ function computerPlay(){
 		randomNum = Math.floor(Math.random() * winningMoves.length);
 		ghost.wordInPlay += winningMoves[randomNum].substring(wordInPlayLen, wordInPlayLen + 1); 
 	} else{ // Computer thinks it will lose 
-		// Find max prolonging move 
 		losingMoves = calculateLosingMoves(ghost.wordList); 
 
 		randomNum = Math.floor(Math.random() * losingMoves.length);
@@ -183,7 +192,8 @@ function computerPlay(){
 }
 
 function calculateWinningMoves(){
-	var requiredLen = ghost.wordInPlay.length + 2;
+	// 
+	var requiredLen = ghost.wordInPlay.length + 2; 
 	var winningMoves = []; 
 	var word;
 	var prefix; 
