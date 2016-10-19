@@ -1,7 +1,8 @@
 var ghost = {
 	wordInPlay: '', 
 	wordList: [], 
-	originalWordList: []
+	originalWordList: [], 
+	minWordLen: 4
 }; 
 
 document.addEventListener('DOMContentLoaded', function(){
@@ -116,10 +117,19 @@ function filterWordList(){
 	ghost.wordList = results; 
 }
 
-function findWord(word){
-	for (i = 0; i < ghost.wordList.length; i++){
-		if (ghost.wordList[i] === word){
+function findWord(word){	
+	var low = 0; 
+	var high = ghost.wordList.length -1; 
+	var mid; 
+
+	while (low <= high){
+		mid = Math.floor((low + high)/2); 
+		if (word === ghost.wordList[mid]){
 			return true; 
+		} else if (word < ghost.wordList[mid]){
+			high = mid -1; 
+		} else{
+			low = mid + 1; 
 		}
 	}
 	return false; 
@@ -135,7 +145,7 @@ function isLoser(){
 	// prefix is present in the list 
 	if (ghost.wordList.length > 0){
 		// LOSE: Word in play length is 4+ and builds a word in WORD.LST
-		if (ghost.wordInPlay.length >= 4){
+		if (ghost.wordInPlay.length >= ghost.minWordLen){
 			if (findWord(ghost.wordInPlay)){
 				playButton = document.getElementById('playButton');
 				playButton.insertAdjacentHTML('afterend', '<p class="gameLog">Word ' + ghost.wordInPlay + ' completed. </p>');
@@ -159,7 +169,7 @@ function humanPlay(){
 		letter = prompt('The current word: ' + ghost.wordInPlay + '\nEnter a letter.');
 	}
 
-	ghost.wordInPlay += letter;
+	ghost.wordInPlay += letter.toLowerCase();
 
 	return isLoser(); 
 }
@@ -172,22 +182,30 @@ function validateInput(letter){
 }
 
 function computerPlay(){
+	const ascii_a = 97; 
+	const ascii_z = 122; 
+
 	var randomNum; 
 	var wordInPlayLen = ghost.wordInPlay.length; 
 
 	// Calculate all winning moves 
-	var winningMoves = calculateWinningMoves(); 
-	var losingMoves; 
+	var winningMoves = calculateWinningMoves();
+	var losingMoves;	
 
-	// Computer thinks it will win
-	if (winningMoves.length > 0){
+	if (winningMoves.length > 0){ // Computer thinks it will win
 		randomNum = Math.floor(Math.random() * winningMoves.length);
 		ghost.wordInPlay += winningMoves[randomNum].substring(wordInPlayLen, wordInPlayLen + 1); 
 	} else{ // Computer thinks it will lose 
-		losingMoves = calculateLosingMoves(ghost.wordList); 
+		losingMoves = calculateLosingMoves(); 
+		console.log(losingMoves);
 
-		randomNum = Math.floor(Math.random() * losingMoves.length);
-		ghost.wordInPlay += losingMoves[randomNum].substring(wordInPlayLen, wordInPlayLen + 1); 
+		if (losingMoves.length > 0){
+			randomNum = Math.floor(Math.random() * losingMoves.length);
+			ghost.wordInPlay += losingMoves[randomNum].substring(wordInPlayLen, wordInPlayLen + 1); 
+		} else{ // If there is no other possible move, play a random characterv
+			randomNum = Math.floor(Math.random() * (ascii_z - ascii_a + 1)) + ascii_a;
+			ghost.wordInPlay += String.fromCharCode(randomNum); 
+		}
 	}
 	return isLoser();
 }
@@ -198,45 +216,97 @@ function calculateWinningMoves(){
 	var winningMoves = []; 
 	var word;
 	var prefix; 
+	var oddLength = []; 
+
+	var alphabet = {}; 
+	var potentialLetter; 
 
 	var i; 
 
+	// Find words that have an even length and keep track of what character they would add
 	for (i = 0; i < ghost.wordList.length; i++){
 		word = ghost.wordList[i]; 
+		potentialLetter = word.charAt(ghost.wordInPlay.length); 
 
-		// Keeps words that have the required length and an odd length 
-		if((word.length >= requiredLen) && (word.length % 2 !== 0)){
+		if((word.length >= requiredLen) && (word.length % 2 === 0)){
+			alphabet[potentialLetter] = true; 
+		} else if((word.length >= requiredLen) && (word.length % 2 !== 0)){
+			prefix = word.substring(0, requiredLen - 1);
+			if ((prefix.length < ghost.minWordLen) || (!findWord(prefix))){
+				oddLength.push(word);
+			}
+		}
+	}
+
+	for (i = 0; i < oddLength.length; i++){
+		word = oddLength[i]; 
+		potentialLetter = oddLength[i].charAt(ghost.wordInPlay.length); 
+
+		// Keeps words that have the required length, an odd length, and whose character isn't present in an even word 
+		if((word.length >= requiredLen) && (word.length % 2 !== 0) && (alphabet[potentialLetter] === undefined)){
 			// Check if add next letter will complete the word 
 			prefix = word.substring(0, requiredLen - 1);
-			
-			if ((prefix.length < 4) || (!findWord(prefix))){
+			if ((prefix.length < ghost.minWordLen) || (!findWord(prefix))){
 				winningMoves.push(word);
 			}
 		}
 	}
 
-	return winningMoves; 
+	// If we are unable to find odd length word such that there is no even length word the user can play, return all odd-length words 
+	//return winningMoves.length ? winningMoves : oddLength; 
+	return winningMoves;
 }
 
 function calculateLosingMoves(){
-	var maxLen = 0; 
 	var losingMoves = []; 
+
+	// Organize the words by length 
+	var wordsByLength = {}; 
+	var wordsByLengthPrefix = {}; 
+	var wordLen; 
+	var prefix; 
+	var maxLen = 0;
+	var maxLenPrefix = 0; 
 
 	var i;  
 
-	// Find the max length possible
+	// The only word left to play is the one already in play
+	if (ghost.wordList.length == 1 && ghost.wordList[0] == ghost.wordInPlay){
+		return losingMoves; 
+	}
+
 	for (i = 0; i < ghost.wordList.length; i++){
-		if (ghost.wordList[i].length > maxLen){
-			maxLen = ghost.wordList[i].length; 
+		wordLen = ghost.wordList[i].length; 
+
+		if (wordsByLength[wordLen] === undefined){
+			wordsByLength[wordLen] = [ghost.wordList[i]]; 
+		} else{
+			wordsByLength[wordLen].push(ghost.wordList[i]); 
+		}
+
+		// Find the max length possible
+		if (wordLen > maxLen){
+			maxLen = wordLen; 
+		}
+
+		// Set without the words that complete when the next character is added
+		prefix = ghost.wordList[i].substring(0, ghost.wordInPlay.length + 1); 
+
+		if (prefix.length >= ghost.minWordLen && !findWord(prefix)){
+			if (wordsByLengthPrefix[wordLen] === undefined){
+				wordsByLengthPrefix[wordLen] = [ghost.wordList[i]]; 
+			} else{
+				wordsByLengthPrefix[wordLen].push(ghost.wordList[i]); 
+			}
+
+			if (wordLen > maxLenPrefix){
+				maxLenPrefix = wordLen; 
+			}
 		}
 	}
 
-	// Find word with the max length 
-	for (i = 0; i < ghost.wordList.length; i++){
-		if (ghost.wordList[i].length === maxLen){
-			losingMoves.push(ghost.wordList[i]); 
-		}
-	}
+	// Return words that have the max length either 
+	losingMoves = wordsByLengthPrefix[maxLenPrefix] || wordsByLength[maxLen]; 
 
 	return losingMoves; 
 }

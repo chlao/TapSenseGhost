@@ -22,7 +22,12 @@ An easy way to get this frontend-only app up and running is to cd into this dire
 
 python -m SimpleHTTPServer 8080
 
+And open up localhost:8080 in your browser. 
+
 ## Details
 
-- The Computer looks for winning moves by looking at odd-length word that currently begin with letters in play, and such that the next letter will not complete a word that is 4+ letters. 
+- The Computer looks for winning moves by looking at odd-length word that currently begin with letters in play, and such that the next letter will not complete a word that is 4+ letters and there are no other possible even words that can be made by adding that letter. 
+- If there are no winning moves that have no corresponding even length word, the computer is provided with odd length words 
+- If there no such winning moves, the computer looks at the longest word that whose next character played doesn't complete the word
+- If there are no losing moves that don't complete the word, computer is provided with the longest word(s)
 
